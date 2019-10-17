@@ -1,0 +1,64 @@
+version: '3'
+services:
+   mysql-container:
+     image: mysql:5.7
+     restart: always
+     ports:
+      - "3306:3306"
+     environment:
+       MYSQL_ROOT_PASSWORD: mysql
+     container_name: mysql-container 
+   mongo-container:
+     image: mongo:3.4-xenial
+     ports:
+      - "27017:27017"
+     restart: always
+     volumes:
+      - /usr/src:/data/db
+     container_name: mongo-container
+   config-container:
+     build: configserver/
+     image: config-server:1.0.0
+     ports:
+       - "8888:8888"
+     restart: always
+     container_name: config-container
+   eureka-container:
+     build: serviceregistry/
+     image: eureka-server:1.0.0
+     ports: 
+      - "8761:8761"
+     restart: always
+     container_name: eureka-container
+   gateway-container:
+     build: api-gateway/
+     image: api-gateway:1.0.0
+     ports: 
+      - "8080:8080"
+     depends_on:
+      - user-container
+      - movie-container
+     restart: always
+     container_name: gateway-container
+   movie-container:
+     build: movie-microservice/
+     image: movie-service:1.0.0
+     ports:
+      - "8085:8085"
+     depends_on:
+      - mongo-container
+      - eureka-container
+      - config-container
+     restart: always
+     container_name: movie-container
+   user-container:
+     build: user-microservice/
+     image: user-service:1.0.0
+     ports: 
+      - "8090:8090"
+     depends_on:
+      - mysql-container
+      - eureka-container 
+      - config-container
+     restart: always
+     container_name: user-container
